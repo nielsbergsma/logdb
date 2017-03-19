@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
-	"strconv"
 
 	"../core"
 
 	"github.com/gorilla/mux"
-	"github.com/ninibe/netlog/biglog"
 )
 
 var (
@@ -66,7 +65,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 	stream := params["stream"]
 
 	offset := int64(0)
-	offsetParameter :=r.URL.Query().Get("offset")
+	offsetParameter := r.URL.Query().Get("offset")
 	if len(offsetParameter) > 0 {
 		offset, _ = strconv.ParseInt(offsetParameter, 10, 64)
 	}
@@ -91,7 +90,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scanner, err := biglog.NewScanner(index.Log, offset)
+	scanner, err := index.NewScanner(offset)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Cannot read log %v", err), 500)
 		return
@@ -110,7 +109,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 	}
 
-	watcher := biglog.NewWatcher(index.Log)
+	watcher := index.NewWatcher()
 	defer watcher.Close()
 	modifications := watcher.Watch()
 

@@ -13,7 +13,7 @@ const (
 )
 
 type Index struct {
-	Log     *biglog.BigLog
+	log     *biglog.BigLog
 	dispose chan struct{}
 	write   chan []byte
 }
@@ -34,7 +34,7 @@ func NewIndex(directory, name string) (*Index, error) {
 	}
 
 	index := &Index{
-		Log:     log,
+		log:     log,
 		dispose: make(chan struct{}),
 		write:   make(chan []byte),
 	}
@@ -47,18 +47,26 @@ func (index *Index) run() {
 	for {
 		select {
 		case data := <-index.write:
-			if written, err := index.Log.Write(data); err != nil {
+			if written, err := index.log.Write(data); err != nil {
 				log.Printf("Error during write %v", err)
 			} else if written < len(data) {
 				log.Printf("Error not all bytes written")
 			}
 
 		case <-index.dispose:
-			index.Log.Close()
+			index.log.Close()
 			close(index.write)
 			close(index.dispose)
 		}
 	}
+}
+
+func (index *Index) NewScanner(offset int64) (*biglog.Scanner, error) {
+	return biglog.NewScanner(index.log, offset)
+}
+
+func (index *Index) NewWatcher() *biglog.Watcher {
+	return biglog.NewWatcher(index.log)
 }
 
 func (index *Index) Close() {
