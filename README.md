@@ -1,7 +1,8 @@
-# Log based stream server
+# Log based stream server / storage
 
 Features:
 - Stores every message ever received
+- Can reply every message ever received
 - Simple HTTP API (see below)
 - Streams messages with http chunk encoding
 - Content agnostic (handles json, xml, protobuf, ...)
