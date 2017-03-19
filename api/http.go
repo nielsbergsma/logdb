@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	directory         string
 	router            *core.Router
 	heartbeatInterval = 30 * time.Second
 	heartbeatMessage  = []byte("\r\n")
