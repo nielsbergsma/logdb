@@ -2,7 +2,7 @@
 
 Features:
 - Stores every message ever received
-- Can reply every message ever received
+- Can replay every message ever received
 - Simple HTTP API (see below)
 - Streams messages with http chunk encoding
 - Content agnostic (handles json, xml, protobuf, ...)
