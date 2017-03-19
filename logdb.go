@@ -25,7 +25,7 @@ func main() {
 	api.Initialize(*dataDirectory)
 
 	mux := mux.NewRouter()
-	mux.HandleFunc("/streams/{stream}", api.IngestMessage).Methods("POST")
+	mux.HandleFunc("/streams/{stream}", api.InsertMessage).Methods("POST")
 	mux.HandleFunc("/streams/{stream}", api.StreamMessage).Methods("GET")
 	http.Handle("/", mux)
 
