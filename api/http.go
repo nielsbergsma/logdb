@@ -16,7 +16,7 @@ import (
 
 var (
 	directory         = "data"
-	heartbeatInterval = 10 * time.Second
+	heartbeatInterval = 30 * time.Second
 	indexesLock       = &sync.Mutex{}
 	indexes           = map[string]*core.Index{}
 )
@@ -133,7 +133,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case <-heartbeat.C:
-			if _, err := w.Write([]byte("{}\r\n")); err != nil {
+			if _, err := w.Write([]byte("\r\n")); err != nil {
 				return
 			}
 			flusher.Flush()
