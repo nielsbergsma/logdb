@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"./api"
+	"./core"
 
 	"github.com/gorilla/mux"
 )
@@ -22,11 +23,13 @@ func main() {
 	log.Printf("Service starting, data directory=%v, http=%v", *dataDirectory, *httpListenAddress)
 	flag.Parse()
 
-	api.Initialize(*dataDirectory)
+	router := core.NewRouter(*dataDirectory)
+	defer router.Close()
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/streams/{stream}", api.InsertMessage).Methods("POST")
 	mux.HandleFunc("/streams/{stream}", api.StreamMessage).Methods("GET")
+	api.Initialize(router)
 	http.Handle("/", mux)
 
 	go func() {
@@ -41,5 +44,4 @@ func main() {
 	<-exit
 
 	log.Printf("Exiting...")
-	api.Close()
 }

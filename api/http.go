@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
 	"../core"
@@ -15,14 +14,13 @@ import (
 
 var (
 	directory         string
+	router            *core.Router
 	heartbeatInterval = 30 * time.Second
 	heartbeatMessage  = []byte("\r\n")
-	indexesLock       = &sync.Mutex{}
-	indexes           = map[string]*core.Index{}
 )
 
-func Initialize(directory_ string) {
-	directory = directory_
+func Initialize(router_ *core.Router) {
+	router = router_
 }
 
 func InsertMessage(w http.ResponseWriter, r *http.Request) {
@@ -38,22 +36,14 @@ func InsertMessage(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if len(data) == 0 {
-		http.Error(w, "Corrupted body", 400)
+		http.Error(w, "Corrupt body", 400)
 		return
 	}
 
-	index, exist := indexes[stream]
-	if !exist {
-		indexesLock.Lock()
-		index, err = core.NewIndex(directory, stream)
-
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
-			return
-		}
-
-		indexes[stream] = index
-		indexesLock.Unlock()
+	index, err := router.GetIndex(stream)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
+		return
 	}
 
 	data = append(data, []byte("\r\n")...)
@@ -71,18 +61,10 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		offset, _ = strconv.ParseInt(offsetParameter, 10, 64)
 	}
 
-	index, exist := indexes[stream]
-	if !exist {
-		indexesLock.Lock()
-		index, err = core.NewIndex(directory, stream)
-
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
-			return
-		}
-
-		indexes[stream] = index
-		indexesLock.Unlock()
+	index, err := router.GetIndex(stream)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
+		return
 	}
 
 	flusher, ok := w.(http.Flusher)
@@ -138,11 +120,5 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 			}
 			flusher.Flush()
 		}
-	}
-}
-
-func Close() {
-	for _, index := range indexes {
-		index.Close()
 	}
 }
