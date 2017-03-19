@@ -1,4 +1,4 @@
-#Log based stream server
+# Log based stream server
 
 Features:
 - Stores every message ever received
