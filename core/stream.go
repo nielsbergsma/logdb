@@ -12,13 +12,13 @@ const (
 	maxIndexEntries = 10000
 )
 
-type Index struct {
+type Stream struct {
 	log     *biglog.BigLog
 	dispose chan struct{}
 	write   chan []byte
 }
 
-func NewIndex(directory, name string) (*Index, error) {
+func NewStream(directory, name string) (*Stream, error) {
 	var log *biglog.BigLog
 	var err error
 
@@ -33,46 +33,46 @@ func NewIndex(directory, name string) (*Index, error) {
 		return nil, err
 	}
 
-	index := &Index{
+	stream := &Stream{
 		log:     log,
 		dispose: make(chan struct{}),
 		write:   make(chan []byte),
 	}
 
-	go index.run()
-	return index, nil
+	go stream.run()
+	return stream, nil
 }
 
-func (index *Index) run() {
+func (stream *Stream) run() {
 	for {
 		select {
-		case data := <-index.write:
-			if written, err := index.log.Write(data); err != nil {
+		case data := <-stream.write:
+			if written, err := stream.log.Write(data); err != nil {
 				log.Printf("Error during write %v", err)
 			} else if written < len(data) {
 				log.Printf("Error not all bytes written")
 			}
 
-		case <-index.dispose:
-			index.log.Close()
-			close(index.write)
-			close(index.dispose)
+		case <-stream.dispose:
+			stream.log.Close()
+			close(stream.write)
+			close(stream.dispose)
 		}
 	}
 }
 
-func (index *Index) NewScanner(offset int64) (*biglog.Scanner, error) {
-	return biglog.NewScanner(index.log, offset)
+func (stream *Stream) NewScanner(offset int64) (*biglog.Scanner, error) {
+	return biglog.NewScanner(stream.log, offset)
 }
 
-func (index *Index) NewWatcher() *biglog.Watcher {
-	return biglog.NewWatcher(index.log)
+func (stream *Stream) NewWatcher() *biglog.Watcher {
+	return biglog.NewWatcher(stream.log)
 }
 
-func (index *Index) Close() {
-	index.dispose <- struct{}{}
+func (stream *Stream) Close() {
+	stream.dispose <- struct{}{}
 }
 
-func (index *Index) Write(data []byte) {
-	index.write <- data
+func (stream *Stream) Write(data []byte) {
+	stream.write <- data
 }

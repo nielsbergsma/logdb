@@ -7,38 +7,38 @@ import (
 type Router struct {
 	directory string
 	lock      *sync.Mutex
-	indexes   map[string]*Index
+	streams   map[string]*Stream
 }
 
 func NewRouter(directory string) *Router {
 	return &Router{
 		directory: directory,
 		lock:      &sync.Mutex{},
-		indexes:   map[string]*Index{},
+		streams:   map[string]*Stream{},
 	}
 }
 
 func (r *Router) Close() {
-	for _, index := range r.indexes {
-		index.Close()
+	for _, stream := range r.streams {
+		stream.Close()
 	}
 }
 
-func (r *Router) GetIndex(name string) (*Index, error) {
+func (r *Router) GetStream(name string) (*Stream, error) {
 	var err error
 
-	if index, exist := r.indexes[name]; exist {
-		return index, nil
+	if stream, exist := r.streams[name]; exist {
+		return stream, nil
 	} else {
 		r.lock.Lock()
 		defer r.lock.Unlock()
 
-		index, err = NewIndex(r.directory, name)
+		stream, err = NewStream(r.directory, name)
 		if err != nil {
 			return nil, err
 		}
 
-		r.indexes[name] = index
-		return index, nil
+		r.streams[name] = stream
+		return stream, nil
 	}
 }

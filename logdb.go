@@ -27,8 +27,8 @@ func main() {
 	defer router.Close()
 
 	mux := mux.NewRouter()
-	mux.HandleFunc("/streams/{stream}", api.InsertMessage).Methods("POST")
-	mux.HandleFunc("/streams/{stream}", api.StreamMessage).Methods("GET")
+	mux.HandleFunc("/streams/{id}", api.InsertMessage).Methods("POST")
+	mux.HandleFunc("/streams/{id}", api.StreamMessage).Methods("GET")
 	api.Initialize(router)
 	http.Handle("/", mux)
 

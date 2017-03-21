@@ -25,7 +25,7 @@ func Initialize(router_ *core.Router) {
 func InsertMessage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	params := mux.Vars(r)
-	stream := params["stream"]
+	id := params["id"]
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -39,20 +39,20 @@ func InsertMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	index, err := router.GetIndex(stream)
+	stream, err := router.GetStream(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
+		http.Error(w, fmt.Sprintf("Cannot open stream: %v", err), 400)
 		return
 	}
 
 	data = append(data, []byte("\r\n")...)
-	index.Write(data)
+	stream.Write(data)
 }
 
 func StreamMessage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	params := mux.Vars(r)
-	stream := params["stream"]
+	id := params["stream"]
 
 	offset := int64(0)
 	offsetParameter := r.URL.Query().Get("offset")
@@ -60,9 +60,9 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		offset, _ = strconv.ParseInt(offsetParameter, 10, 64)
 	}
 
-	index, err := router.GetIndex(stream)
+	stream, err := router.GetStream(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Cannot open index: %v", err), 400)
+		http.Error(w, fmt.Sprintf("Cannot open stream: %v", err), 400)
 		return
 	}
 
@@ -72,7 +72,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scanner, err := index.NewScanner(offset)
+	scanner, err := stream.NewScanner(offset)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Cannot read log %v", err), 500)
 		return
@@ -91,7 +91,7 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 	}
 
-	watcher := index.NewWatcher()
+	watcher := stream.NewWatcher()
 	defer watcher.Close()
 	modifications := watcher.Watch()
 
