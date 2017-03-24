@@ -11,4 +11,6 @@ Features:
 Usage:
 - Start: go run logdb.go --data-directory=data/ --http=:9999
 - Insert message: `curl -X POST -H "Content-Type: application/json" -d '{ "message": 1 }' "http://localhost:9999/streams/stream1"`
-- Stream messages (from offset): `curl "http://localhost:9999/streams/stream1?offset=0`
+- Stream messages (from offset): `curl "http://localhost:9999/streams/stream1?offset=0"`
+
+//https://www.youtube.com/watch?v=ysjcEN548yc&t=1267s

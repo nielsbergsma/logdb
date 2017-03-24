@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +19,12 @@ var (
 	router            *core.Router
 	heartbeatInterval = 30 * time.Second
 	heartbeatMessage  = []byte("\r\n")
+)
+
+type (
+	HealthResult struct {
+		Success bool `json:"success"`
+	}
 )
 
 func Initialize(router_ *core.Router) {
@@ -52,18 +61,18 @@ func InsertMessage(w http.ResponseWriter, r *http.Request) {
 func StreamMessage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	params := mux.Vars(r)
-	id := params["stream"]
-
-	offset := int64(0)
-	offsetParameter := r.URL.Query().Get("offset")
-	if len(offsetParameter) > 0 {
-		offset, _ = strconv.ParseInt(offsetParameter, 10, 64)
-	}
+	id := params["id"]
 
 	stream, err := router.GetStream(id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Cannot open stream: %v", err), 400)
 		return
+	}
+
+	offset := 1 + stream.LastOffset()
+	offsetParameter := r.URL.Query().Get("offset")
+	if len(offsetParameter) > 0 {
+		offset, _ = strconv.ParseInt(offsetParameter, 10, 64)
 	}
 
 	flusher, ok := w.(http.Flusher)
@@ -120,4 +129,35 @@ func StreamMessage(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+func GetHealth(w http.ResponseWriter, r *http.Request) {
+	var url = "http://" + r.Host + "/streams/health"
+	var message = []byte(time.Now().String() + "\r\n")
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		http.Post(url, "text/plain", bytes.NewBuffer(message))
+	}()
+
+	client := http.Client{
+		Timeout: time.Duration(1 * time.Second),
+	}
+
+	response, err := client.Get(url)
+	if err != nil {
+		body, _ := json.Marshal(&HealthResult{false})
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+		return
+	}
+
+	defer response.Body.Close()
+	reader := bufio.NewReader(response.Body)
+	result, _ := reader.ReadBytes('\n')
+	ok := string(result) == string(message)
+
+	body, _ := json.Marshal(&HealthResult{ok})
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(body)
 }

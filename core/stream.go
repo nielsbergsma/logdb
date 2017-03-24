@@ -14,8 +14,8 @@ const (
 
 type Stream struct {
 	log     *biglog.BigLog
-	dispose chan struct{}
 	write   chan []byte
+	dispose chan struct{}
 }
 
 func NewStream(directory, name string) (*Stream, error) {
@@ -54,9 +54,9 @@ func (stream *Stream) run() {
 			}
 
 		case <-stream.dispose:
-			stream.log.Close()
-			close(stream.write)
 			close(stream.dispose)
+			close(stream.write)
+			stream.log.Close()
 		}
 	}
 }
@@ -67,6 +67,10 @@ func (stream *Stream) NewScanner(offset int64) (*biglog.Scanner, error) {
 
 func (stream *Stream) NewWatcher() *biglog.Watcher {
 	return biglog.NewWatcher(stream.log)
+}
+
+func (stream *Stream) LastOffset() int64 {
+	return stream.log.Latest()
 }
 
 func (stream *Stream) Close() {

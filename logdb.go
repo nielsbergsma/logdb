@@ -27,6 +27,7 @@ func main() {
 	defer router.Close()
 
 	mux := mux.NewRouter()
+	mux.HandleFunc("/health", api.GetHealth).Methods("GET")
 	mux.HandleFunc("/streams/{id}", api.InsertMessage).Methods("POST")
 	mux.HandleFunc("/streams/{id}", api.StreamMessage).Methods("GET")
 	api.Initialize(router)
