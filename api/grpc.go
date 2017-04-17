@@ -30,33 +30,16 @@ func (s *GrpcApi) OpenStream(arguments *OpenStreamArguments, messages StreamApi_
 	defer watcher.Close()
 	modifications := watcher.Watch()
 
-	/*
-		heartbeat := time.NewTicker(heartbeatInterval)
-		defer heartbeat.Stop()
-	*/
-
-	for {
-		select {
-		case <-modifications:
-			for scanner.Scan() {
-				if err := scanner.Err(); err != nil {
-					return err
-				}
-
-				message := &Message{scanner.Bytes()}
-				if err := messages.Send(message); err != nil {
-					return err
-				}
+	for range modifications {
+		for scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				return err
 			}
 
-			/*
-				case <-heartbeat.C:
-					if _, err := w.Write(heartbeatMessage); err != nil {
-						return
-					}
-					flusher.Flush()
-			*/
-
+			message := &Message{scanner.Bytes()}
+			if err := messages.Send(message); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
