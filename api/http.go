@@ -48,6 +48,10 @@ func InsertMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if string(data) == "\r\n" {
+		return
+	}
+
 	stream, err := router.GetStream(id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Cannot open stream: %v", err), 400)
@@ -136,7 +140,7 @@ func GetHealth(w http.ResponseWriter, r *http.Request) {
 	var message = []byte(time.Now().String() + "\r\n")
 
 	go func() {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 		http.Post(url, "text/plain", bytes.NewBuffer(message))
 	}()
 

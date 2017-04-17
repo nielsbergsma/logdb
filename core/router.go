@@ -2,6 +2,7 @@ package core
 
 import (
 	"sync"
+	"time"
 )
 
 type Router struct {
@@ -22,6 +23,7 @@ func (r *Router) Close() {
 	for _, stream := range r.streams {
 		stream.Close()
 	}
+	time.Sleep(5 * time.Second)
 }
 
 func (r *Router) GetStream(name string) (*Stream, error) {

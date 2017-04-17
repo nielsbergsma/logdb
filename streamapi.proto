@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api;
+
+service StreamApi {
+	rpc OpenStream(OpenStreamArguments) returns (stream Message) {}
+}
+
+message OpenStreamArguments {
+	string id = 1;
+	int64 offset = 2;
+}
+
+message Message {
+  bytes data = 1;
+}
